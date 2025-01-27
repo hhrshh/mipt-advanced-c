@@ -26,5 +26,5 @@ int main(void)
     uint32_t n;
     scanf("%d", &n);
     printf("%u\n",  (~ n >> 24 << 24) | (n << 8 >> 8));
-    return 0;
+    return 0; 
 }
