@@ -55,7 +55,7 @@ uint64_t findMaxBlock(list *head)
             maxSize = head->size;
             maxSizeAddress = head->address;
         }
-    return maxSizeAddress;
+    return maxSizeAddress; 
 }
 
 int main(void)
