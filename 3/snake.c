@@ -6,9 +6,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#define MIN_Y  2
-enum {LEFT=1, UP, RIGHT, DOWN, STOP_GAME=KEY_F(10)};
-enum {MAX_TAIL_SIZE=100, START_TAIL_SIZE=3, MAX_FOOD_SIZE=20, FOOD_EXPIRE_SECONDS=10};
+#define MIN_Y 2
+enum {LEFT = 1, UP, RIGHT, DOWN, STOP_GAME=KEY_F(10)};
+enum {MAX_TAIL_SIZE = 100, START_TAIL_SIZE = 3, MAX_FOOD_SIZE = 20, FOOD_EXPIRE_SECONDS=10};
 
 
 // Здесь храним коды управления змейкой
@@ -50,12 +50,13 @@ typedef struct tail_t
 
 void initTail(struct tail_t t[], size_t size)
 {
-    struct tail_t init_t={0,0};
-    for(size_t i=0; i<size; i++)
+    struct tail_t init_t = {0,0};
+    for(size_t i = 0; i < size; i++)
     {
-        t[i]=init_t;
+        t[i] = init_t;
     }
 }
+
 void initHead(struct snake_t *head, int x, int y)
 {
     head->x = x;
@@ -65,11 +66,11 @@ void initHead(struct snake_t *head, int x, int y)
 
 void initSnake(snake_t *head, size_t size, int x, int y)
 {
-tail_t*  tail  = (tail_t*) malloc(MAX_TAIL_SIZE*sizeof(tail_t));
+    tail_t* tail = (tail_t*)malloc(MAX_TAIL_SIZE*sizeof(tail_t));
     initTail(tail, MAX_TAIL_SIZE);
     initHead(head, x, y);
     head->tail = tail; // прикрепляем к голове хвост
-    head->tsize = size+1;
+    head->tsize = size + 1;
     head->controls = default_controls;
 }
 
@@ -139,28 +140,45 @@ void goTail(struct snake_t *head)
     head->tail[0].y = head->y;
 }
 
+int check(snake_t *head)
+{
+    for (size_t i = 1; i < head->tsize; i++)
+        if(head->x == head->tail[i].x && head->y == head->tail[i].y)
+            return 1;
+    return 0;
+}
+
 int main()
 {
 snake_t* snake = (snake_t*)malloc(sizeof(snake_t));
-    initSnake(snake,START_TAIL_SIZE,10,10);
+    initSnake(snake, START_TAIL_SIZE, 10,10);
     initscr();
     keypad(stdscr, TRUE); // Включаем F1, F2, стрелки и т.д.
     raw();                // Откдючаем line buffering
-    noecho();            // Отключаем echo() режим при вызове getch
-    curs_set(FALSE);    //Отключаем курсор
+    noecho();             // Отключаем echo() режим при вызове getch
+    curs_set(FALSE);      // Отключаем курсор
     mvprintw(0, 0,"Use arrows for control. Press 'F10' for EXIT");
-    timeout(0);    //Отключаем таймаут после нажатия клавиши в цикле
-    int key_pressed=0;
-    while( key_pressed != STOP_GAME )
+    timeout(0);           // Отключаем таймаут после нажатия клавиши в цикле
+    int key_pressed = 0;
+    int game_over = 0;
+    while(key_pressed != STOP_GAME && !game_over)
     {
         key_pressed = getch(); // Считываем клавишу
         go(snake);
         goTail(snake);
-        timeout(100); // Задержка при отрисовке
+        timeout(100);     // Задержка при отрисовке
         changeDirection(snake, key_pressed);
+        if(check(snake))  // Проверяем, если голова пересекла тело
+        {
+            mvprintw(10, 35,"GAME OVER");
+            refresh();
+            timeout(2000);
+            getch();
+            game_over = 1;
+        }
     }
     free(snake->tail);
     free(snake);
-    endwin(); // Завершаем режим curses mod
+    endwin();           // Завершаем режим curses mod
     return 0;
 }
