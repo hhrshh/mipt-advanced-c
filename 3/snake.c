@@ -148,37 +148,52 @@ int check(snake_t *head)
     return 0;
 }
 
+int snake_getch_delay(int millis)
+{
+    clock_t start_time = clock();
+    while ((clock() - start_time) * 1000 / CLOCKS_PER_SEC < millis)
+    {
+        int ch = getch();
+        if (ch != ERR) // Если была нажата клавиша
+        {
+            return ch;
+        }
+    }
+    return ERR; // Если клавиша не была нажата
+}
+
 int main()
 {
 snake_t* snake = (snake_t*)malloc(sizeof(snake_t));
-    initSnake(snake, START_TAIL_SIZE, 10,10);
+    initSnake(snake, START_TAIL_SIZE, 10, 10);
     initscr();
     keypad(stdscr, TRUE); // Включаем F1, F2, стрелки и т.д.
     raw();                // Откдючаем line buffering
     noecho();             // Отключаем echo() режим при вызове getch
     curs_set(FALSE);      // Отключаем курсор
-    mvprintw(0, 0,"Use arrows for control. Press 'F10' for EXIT");
+    mvprintw(0, 0, "Use arrows for control. Press 'F10' for EXIT");
     timeout(0);           // Отключаем таймаут после нажатия клавиши в цикле
     int key_pressed = 0;
     int game_over = 0;
     while(key_pressed != STOP_GAME && !game_over)
     {
-        key_pressed = getch(); // Считываем клавишу
+        
         go(snake);
         goTail(snake);
-        timeout(100);     // Задержка при отрисовке
-        changeDirection(snake, key_pressed);
-        if(check(snake))  // Проверяем, если голова пересекла тело
+        key_pressed = snake_getch_delay(100); // Считываем клавишу c задержкой 100 мс
+        if(key_pressed != ERR)
+            changeDirection(snake, key_pressed);
+
+        if(check(snake))      // Проверяем, если голова пересекла тело
         {
-            mvprintw(10, 35,"GAME OVER");
+            mvprintw(10, 35,"GAME OVER!");
             refresh();
-            timeout(2000);
-            getch();
+            snake_getch_delay(2000); // Задержка для прочтения GAME OVER!
             game_over = 1;
         }
     }
     free(snake->tail);
     free(snake);
-    endwin();           // Завершаем режим curses mod
+    endwin();                 // Завершаем режим curses mod
     return 0;
 }
