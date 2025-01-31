@@ -96,7 +96,7 @@ void go(struct snake_t *head)
             mvprintw(head->y, ++(head->x), "%c", ch);
         break;
         case UP:
-            if(head->y <= 0) // Циклическое движение, чтобы не уходить за пределы экрана
+            if(head->y <= 1) // Циклическое движение, чтобы не уходить за пределы экрана
                 head->y = max_y;
             mvprintw(--(head->y), head->x, "%c", ch);
         break;
