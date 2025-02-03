@@ -176,18 +176,34 @@ void go(struct snake_t *head)
     refresh();
 }
 
+int checkDirection(snake_t* snake, int32_t key)
+{
+    for(size_t i = 0; i < CONTROLS; ++i)
+    {
+        if(snake->direction == DOWN && key == default_controls[i].up)
+            return 0;
+        else if(snake->direction == UP && key == default_controls[i].down)
+            return 0;
+        else if(snake->direction == RIGHT && key == default_controls[i].left)
+            return 0;
+        else if(snake->direction == LEFT && key == default_controls[i].right)
+            return 0;   
+    }
+    return 1;
+}
+
 void changeDirection(struct snake_t* snake, const int32_t key)
 {
     for (size_t i = 0; i < CONTROLS; ++i)
     {
-    if (key == snake->controls[i].down)
-        snake->direction = DOWN;
-    else if(key == snake->controls[i].up)
-        snake->direction = UP;
-    else if(key == snake->controls[i].right)
-        snake->direction = RIGHT;
-    else if(key == snake->controls[i].left)
-        snake->direction = LEFT;
+        if (key == snake->controls[i].down)
+            snake->direction = DOWN;
+        else if(key == snake->controls[i].up)
+            snake->direction = UP;
+        else if(key == snake->controls[i].right)
+            snake->direction = RIGHT;
+        else if(key == snake->controls[i].left)
+            snake->direction = LEFT;
     }
 }
 
@@ -252,16 +268,15 @@ snake_t* snake = (snake_t*)malloc(sizeof(snake_t));
         
         go(snake);
         goTail(snake);
-        key_pressed = snake_getch_delay(100); // Считываем клавишу c задержкой 100 мс
-        refreshFood(food, SEED_NUMBER);// Обновляем еду
-        if(key_pressed != ERR)
+        key_pressed = snake_getch_delay(100);                        // Считываем клавишу c задержкой 100 мс
+        refreshFood(food, SEED_NUMBER);                              // Обновляем еду
+        if(key_pressed != ERR && checkDirection(snake, key_pressed)) // нажата ли клавиша и если вдижение змейки и направление нажатия корректны
             changeDirection(snake, key_pressed);
-
-        if(check(snake))      // Проверяем, если голова пересекла тело
+        if(check(snake))                                             // Проверяем, если голова пересекла тело
         {
             mvprintw(10, 35,"GAME OVER!");
             refresh();
-            snake_getch_delay(2000); // Задержка для прочтения GAME OVER!
+            snake_getch_delay(2000);                                 // Задержка для прочтения GAME OVER!
             game_over = 1;
         }
     }
