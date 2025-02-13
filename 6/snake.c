@@ -225,7 +225,7 @@ void goTail(struct snake_t *head)
     head->tail[0].y = head->y;
 }
 
-int check(snake_t *head)
+int isCrush(snake_t *head)
 {
     for (size_t i = 1; i < head->tsize; i++)
         if(head->x == head->tail[i].x && head->y == head->tail[i].y)
@@ -270,7 +270,24 @@ void addTail(struct snake_t *head)
     head->tsize++;
 }
 
-//========================================================================
+
+void repairSeed(struct food f[], size_t nfood, struct snake_t *head)
+{
+    for(size_t i = 0; i < head->tsize; ++i)
+        for(size_t j = 0; j < nfood; ++j)
+        {
+            if(f[j].x == head->tail[i].x && f[j].y == head->tail[i].y && f[i].enable) // если зерна совпадают со змейкой
+                refreshFood(f, SEED_NUMBER);                                       // обновляем еду   
+        }
+
+    for(size_t i = 0; i < nfood; ++i)
+        for(size_t j = 0; j < nfood; ++j)
+        {
+            if(i!=j && f[i].enable && f[j].enable && f[j].x == f[i].x && f[j].y == f[i].y && f[i].enable) // Если два зерна на одной точке
+                refreshFood(f, SEED_NUMBER);                                      // обновляем еду
+        }
+}
+
 
 // Вынести тело цикла while из int main() в отдельную функцию update
 // и посмотреть, как изменится профилирование
@@ -287,15 +304,18 @@ void update(struct snake_t *head, struct food f[], const int32_t key_pressed)
     addTail(head);                                          // Добавляем + 1 к хвосту
 
     refreshFood(food, SEED_NUMBER);                         // Обновляем еду
-
+    repairSeed(food, SEED_NUMBER, head);                   // Определяем корректность установки зерен
+                                                            // Если не правильно обновляем зерна
     refresh();                                              //Обновление экрана, вывели кадр анимации
 }
+
+
 
 //========================================================================
 
 int main()
 {
-snake_t* snake = (snake_t*)malloc(sizeof(snake_t));
+    snake_t* snake = (snake_t*)malloc(sizeof(snake_t));
     initSnake(snake, START_TAIL_SIZE, 10, 10);
     initscr();
     keypad(stdscr, TRUE); // Включаем F1, F2, стрелки и т.д.
@@ -310,20 +330,22 @@ snake_t* snake = (snake_t*)malloc(sizeof(snake_t));
 
     int key_pressed = 0;
     int game_over = 0;
-    while(key_pressed != STOP_GAME && !game_over)
+    while(key_pressed != STOP_GAME)
     {
         
 
-        key_pressed = snake_getch_delay(100);                        // Считываем клавишу c задержкой 100 мс
+        key_pressed = snake_getch_delay(100);                          // Считываем клавишу c задержкой 100 мс
         update(snake, food, key_pressed);
+        
 
-        if(check(snake))                                             // Проверяем, если голова пересекла тело
+        if(isCrush(snake))                                             // Проверяем, если голова пересекла тело
         {
-            mvprintw(10, 35,"GAME OVER!");
+            mvprintw(10, 35, "GAME OVER!");
             refresh();
-            snake_getch_delay(2000);                                 // Задержка для прочтения GAME OVER!
-            game_over = 1;
+            snake_getch_delay(2000);                                   // Задержка для прочтения GAME OVER!
+            break;
         }
+        
     }
     free(snake->tail);
     free(snake);
