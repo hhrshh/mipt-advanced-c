@@ -8,6 +8,7 @@
 
 #define MIN_Y 2
 #define CONTROLS 3
+#define PLAYERS  2
 
 enum {LEFT = 1, UP, RIGHT, DOWN, STOP_GAME = KEY_F(10)};
 enum {MAX_TAIL_SIZE = 100, START_TAIL_SIZE = 3, MAX_FOOD_SIZE = 20, FOOD_EXPIRE_SECONDS = 10, SEED_NUMBER = 3};
@@ -130,14 +131,16 @@ void initHead(struct snake_t *head, int x, int y)
     head->direction = RIGHT;
 }
 
-void initSnake(snake_t *head, size_t size, int x, int y)
+void initSnake(snake_t *head[], size_t size, int x, int y,int i)
 {
-    tail_t* tail = (tail_t*)malloc(MAX_TAIL_SIZE*sizeof(tail_t));
+    head[i] = (snake_t*)malloc(sizeof(snake_t));
+    tail_t* tail = (tail_t*) malloc(MAX_TAIL_SIZE*sizeof(tail_t));
     initTail(tail, MAX_TAIL_SIZE);
-    initHead(head, x, y);
-    head->tail = tail; // прикрепляем к голове хвост
-    head->tsize = size + 1;
-    head->controls = default_controls;
+    initHead(head[i], x, y);
+    head[i]->tail     = tail; // прикрепляем к голове хвост
+    head[i]->tsize    = size+1;
+    //~ head[i]->controls = default_controls[i];
+    head[i]->controls = default_controls;
 }
 
 /*
@@ -315,8 +318,9 @@ void update(struct snake_t *head, struct food f[], const int32_t key_pressed)
 
 int main()
 {
-    snake_t* snake = (snake_t*)malloc(sizeof(snake_t));
-    initSnake(snake, START_TAIL_SIZE, 10, 10);
+    snake_t* snakes[PLAYERS];
+    for (int i = 0; i < PLAYERS; i++)
+        initSnake(snakes,START_TAIL_SIZE, 10 + i * 10, 10 + i * 10, i);
     initscr();
     keypad(stdscr, TRUE); // Включаем F1, F2, стрелки и т.д.
     raw();                // Откдючаем line buffering
@@ -330,25 +334,28 @@ int main()
 
     int key_pressed = 0;
     int game_over = 0;
-    while(key_pressed != STOP_GAME)
+    while(key_pressed != STOP_GAME && !game_over)
     {
-        
-
-        key_pressed = snake_getch_delay(100);                          // Считываем клавишу c задержкой 100 мс
-        update(snake, food, key_pressed);
-        
-
-        if(isCrush(snake))                                             // Проверяем, если голова пересекла тело
+        key_pressed = snake_getch_delay(100);                                // Считываем клавишу c задержкой 100 мс
+        for (int i = 0; i < PLAYERS; i++)
         {
-            mvprintw(10, 35, "GAME OVER!");
-            refresh();
-            snake_getch_delay(2000);                                   // Задержка для прочтения GAME OVER!
-            break;
-        }
-        
+            update(snakes[i], food, key_pressed);
+            if(isCrush(snakes[i]))                                           // Проверяем, если голова пересекла тело
+            {
+                mvprintw(10, 35, "GAME OVER!");
+                refresh();
+                snake_getch_delay(2000);                                     // Задержка для прочтения GAME OVER!
+                game_over = 1;
+                break;
+            }
+        }  
     }
-    free(snake->tail);
-    free(snake);
+
+    for (int i = 0; i < PLAYERS; i++)
+    {
+        free(snakes[i]->tail);
+        free(snakes[i]);
+    }
     endwin();                 // Завершаем режим curses mod
     return 0;
 }
