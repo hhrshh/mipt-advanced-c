@@ -7,7 +7,8 @@
 #include <unistd.h>
 
 #define MIN_Y 2
-#define CONTROLS 3
+#define CONTROLS 2
+double DELAY = 0.1;
 #define PLAYERS  2
 
 enum {LEFT = 1, UP, RIGHT, DOWN, STOP_GAME = KEY_F(10)};
@@ -23,11 +24,8 @@ struct control_buttons
     int right;
 }control_buttons;
 
-struct control_buttons default_controls[CONTROLS] = {
-    {KEY_DOWN, KEY_UP, KEY_LEFT, KEY_RIGHT}, // упрвления стрелками
-    {'s', 'w', 'a', 'd'}, // упрвления s w a d
-    {'S', 'W', 'A', 'D'} // управление S W A D
-};
+struct control_buttons default_controls[CONTROLS] = {{KEY_DOWN, KEY_UP, KEY_LEFT, KEY_RIGHT},
+                                                    {'s', 'w', 'a', 'd'}};
 /*
  Голова змейки содержит в себе
  x,y - координаты текущей позиции
@@ -42,7 +40,7 @@ typedef struct snake_t
     int direction;
     size_t tsize;
     struct tail_t *tail;
-    struct control_buttons *controls;
+    struct control_buttons controls;
 } snake_t;
 
 /*
@@ -133,14 +131,14 @@ void initHead(struct snake_t *head, int x, int y)
 
 void initSnake(snake_t *head[], size_t size, int x, int y,int i)
 {
-    head[i] = (snake_t*)malloc(sizeof(snake_t));
-    tail_t* tail = (tail_t*) malloc(MAX_TAIL_SIZE*sizeof(tail_t));
+    head[i]    = (snake_t*)malloc(sizeof(snake_t));
+    tail_t*  tail  = (tail_t*) malloc(MAX_TAIL_SIZE*sizeof(tail_t));
     initTail(tail, MAX_TAIL_SIZE);
     initHead(head[i], x, y);
     head[i]->tail     = tail; // прикрепляем к голове хвост
     head[i]->tsize    = size+1;
-    //~ head[i]->controls = default_controls[i];
-    head[i]->controls = default_controls;
+    head[i]->controls = default_controls[i];
+    //~ head[i]->controls = default_controls[0];
 }
 
 /*
@@ -198,17 +196,14 @@ int checkDirection(snake_t* snake, int32_t key)
 
 void changeDirection(struct snake_t* snake, const int32_t key)
 {
-    for (size_t i = 0; i < CONTROLS; ++i)
-    {
-        if (key == snake->controls[i].down)
-            snake->direction = DOWN;
-        else if(key == snake->controls[i].up)
-            snake->direction = UP;
-        else if(key == snake->controls[i].right)
-            snake->direction = RIGHT;
-        else if(key == snake->controls[i].left)
-            snake->direction = LEFT;
-    }
+    if (key == snake->controls.down)
+        snake->direction = DOWN;
+    else if (key == snake->controls.up)
+        snake->direction = UP;
+    else if (key == snake->controls.right)
+        snake->direction = RIGHT;
+    else if (key == snake->controls.left)
+        snake->direction = LEFT;
 }
 
 /*
@@ -296,7 +291,7 @@ void repairSeed(struct food f[], size_t nfood, struct snake_t *head)
 // и посмотреть, как изменится профилирование
 void update(struct snake_t *head, struct food f[], const int32_t key_pressed)
 {
-    
+    clock_t begin = clock();
     go(head);
     goTail(head);
 
@@ -309,7 +304,9 @@ void update(struct snake_t *head, struct food f[], const int32_t key_pressed)
     refreshFood(food, SEED_NUMBER);                         // Обновляем еду
     repairSeed(food, SEED_NUMBER, head);                   // Определяем корректность установки зерен
                                                             // Если не правильно обновляем зерна
-    refresh();                                              //Обновление экрана, вывели кадр анимации
+    refresh();                                            //Обновление экрана, вывели кадр анимации
+    while ((double)(clock() - begin)/CLOCKS_PER_SEC < DELAY)
+    {}
 }
 
 
@@ -336,7 +333,7 @@ int main()
     int game_over = 0;
     while(key_pressed != STOP_GAME && !game_over)
     {
-        key_pressed = snake_getch_delay(100);                                // Считываем клавишу c задержкой 100 мс
+        key_pressed = getch(); // Считываем клавишу                                // Считываем клавишу c задержкой 100 мс
         for (int i = 0; i < PLAYERS; i++)
         {
             update(snakes[i], food, key_pressed);
