@@ -248,7 +248,7 @@ int snake_getch_delay(int millis)
 }
 
 
-//========================================================================
+
 //Проверка того, является ли какое-то из зерен съеденным,
 _Bool haveEat(struct snake_t *head, struct food f[])
 {
@@ -269,6 +269,28 @@ void addTail(struct snake_t *head)
 {
     head->tsize++;
 }
+
+//========================================================================
+
+// Вынести тело цикла while из int main() в отдельную функцию update
+// и посмотреть, как изменится профилирование
+void update(struct snake_t *head, struct food f[], const int32_t key_pressed)
+{
+    
+    go(head);
+    goTail(head);
+
+    if(key_pressed != ERR && checkDirection(head, key_pressed)) // нажата ли клавиша и если вдижение змейки и направление нажатия корректны
+        changeDirection(head, key_pressed);
+
+    if (haveEat(head, food))                                // Проверка на съедение
+    addTail(head);                                          // Добавляем + 1 к хвосту
+
+    refreshFood(food, SEED_NUMBER);                         // Обновляем еду
+
+    refresh();                                              //Обновление экрана, вывели кадр анимации
+}
+
 //========================================================================
 
 int main()
@@ -291,17 +313,10 @@ snake_t* snake = (snake_t*)malloc(sizeof(snake_t));
     while(key_pressed != STOP_GAME && !game_over)
     {
         
-        go(snake);
-        goTail(snake);
+
         key_pressed = snake_getch_delay(100);                        // Считываем клавишу c задержкой 100 мс
-        refreshFood(food, SEED_NUMBER);                              // Обновляем еду
+        update(snake, food, key_pressed);
 
-        if (haveEat(snake,food))                                     // Проверка на съедение
-            addTail(snake);                                          // Добавляем + 1 к хвосту
-
-
-        if(key_pressed != ERR && checkDirection(snake, key_pressed)) // нажата ли клавиша и если вдижение змейки и направление нажатия корректны
-            changeDirection(snake, key_pressed);
         if(check(snake))                                             // Проверяем, если голова пересекла тело
         {
             mvprintw(10, 35,"GAME OVER!");
