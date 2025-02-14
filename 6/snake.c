@@ -286,11 +286,43 @@ void repairSeed(struct food f[], size_t nfood, struct snake_t *head)
         }
 }
 
+//======Добавление ИИ========================================================   
 
-// Вынести тело цикла while из int main() в отдельную функцию update
-// и посмотреть, как изменится профилирование
-void update(struct snake_t *head, struct food f[], const int32_t key_pressed)
+int distance(const snake_t snake, const struct food food) {   // вычисляет количество ходов до еды
+    return (abs(snake.x - food.x) + abs(snake.y - food.y));
+}
+//Для автоизменения направления напишем функцию
+//Она определяет ближайшую к себе еду и движется по направлению к ней
+
+
+
+
+void autoChangeDirection(snake_t *snake, struct food food[], int foodSize)
 {
+    int pointer = 0;
+    for (int i = 1; i < foodSize; i++) {   // ищем ближайшую еду
+        pointer = (distance(*snake, food[i]) < distance(*snake, food[pointer])) ? i : pointer;
+    }
+    if ((snake->direction == RIGHT || snake->direction == LEFT) &&
+        (snake->y != food[pointer].y)) {  // горизонтальное движение
+        snake->direction = (food[pointer].y > snake->y) ? DOWN : UP;
+    } else if ((snake->direction == DOWN || snake->direction == UP) &&
+               (snake->x != food[pointer].x)) {  // вертикальное движение
+        snake->direction = (food[pointer].x > snake->x) ? RIGHT : LEFT;
+    }
+}
+
+//========================================================================
+// Вынести тело цикла while из int main() в отдельную функцию update
+
+void update(struct snake_t *head, struct food f[], const int32_t key_pressed, int ai)
+{
+    if(ai)                                                   // для каждого плеера свое управление
+        autoChangeDirection(head, f, SEED_NUMBER);
+    else 
+        if(checkDirection(head, key_pressed)) 
+            changeDirection(head, key_pressed);
+
     clock_t begin = clock();
     go(head);
     goTail(head);
@@ -308,8 +340,6 @@ void update(struct snake_t *head, struct food f[], const int32_t key_pressed)
     while ((double)(clock() - begin)/CLOCKS_PER_SEC < DELAY)
     {}
 }
-
-
 
 //========================================================================
 
@@ -336,7 +366,7 @@ int main()
         key_pressed = getch(); // Считываем клавишу                                // Считываем клавишу c задержкой 100 мс
         for (int i = 0; i < PLAYERS; i++)
         {
-            update(snakes[i], food, key_pressed);
+            update(snakes[i], food, key_pressed, i);
             if(isCrush(snakes[i]))                                           // Проверяем, если голова пересекла тело
             {
                 mvprintw(10, 35, "GAME OVER!");
