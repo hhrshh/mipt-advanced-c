@@ -8,7 +8,7 @@
 
 #define MIN_Y 2
 #define CONTROLS 2
-double DELAY = 0.1;
+double DELAY = 0.05;
 #define PLAYERS  2
 
 enum {LEFT = 1, UP, RIGHT, DOWN, STOP_GAME = KEY_F(10)};
@@ -22,7 +22,7 @@ struct control_buttons
     int up;
     int left;
     int right;
-}control_buttons;
+} control_buttons;
 
 struct control_buttons default_controls[CONTROLS] = {{KEY_DOWN, KEY_UP, KEY_LEFT, KEY_RIGHT},
                                                     {'s', 'w', 'a', 'd'}};
@@ -65,10 +65,32 @@ void initFood(struct food f[], size_t size)
 {
     struct food init = {0};
     for(size_t i = 0; i < size; i++)
-    {
         f[i] = init;
+}
+
+//========================================================================
+void setColor(int objectType)
+{
+    attroff(COLOR_PAIR(1));
+    attroff(COLOR_PAIR(2));
+    attroff(COLOR_PAIR(3));
+    switch (objectType)
+    {
+        case 1:{ // SNAKE1
+            attron(COLOR_PAIR(1));
+            break;
+        }
+        case 2:{ // SNAKE2
+            attron(COLOR_PAIR(2));
+            break;
+        }
+        case 3:{ // FOOD
+            attron(COLOR_PAIR(3));
+            break;
+        }
     }
 }
+//========================================================================
 
 /*
  Обновить/разместить текущее зерно на поле
@@ -93,33 +115,25 @@ void putFoodSeed(struct food *fp)
  */
 void putFood(struct food f[], size_t number_seeds)
 {
+    setColor(3);
     for(size_t i=0; i<number_seeds; i++)
-    {
         putFoodSeed(&f[i]);
-    }
 }
 
 void refreshFood(struct food f[], int nfood)
 {
+    setColor(3);
     for(size_t i=0; i < nfood; i++)
-    {
-        if( f[i].put_time )
-        {
-            if( !f[i].enable || (time(NULL) - f[i].put_time) > FOOD_EXPIRE_SECONDS )
-            {
+        if(f[i].put_time)
+            if(!f[i].enable || (time(NULL) - f[i].put_time) > FOOD_EXPIRE_SECONDS)
                 putFoodSeed(&f[i]);
-            }
-        }
-    }
 }
 
 void initTail(struct tail_t t[], size_t size)
 {
     struct tail_t init_t = {0,0};
     for(size_t i = 0; i < size; i++)
-    {
         t[i] = init_t;
-    }
 }
 
 void initHead(struct snake_t *head, int x, int y)
@@ -136,16 +150,19 @@ void initSnake(snake_t *head[], size_t size, int x, int y,int i)
     initTail(tail, MAX_TAIL_SIZE);
     initHead(head[i], x, y);
     head[i]->tail     = tail; // прикрепляем к голове хвост
-    head[i]->tsize    = size+1;
+    head[i]->tsize    = size + 1;
     head[i]->controls = default_controls[i];
     //~ head[i]->controls = default_controls[0];
 }
 
+
+
 /*
  Движение головы с учетом текущего направления движения
  */
-void go(struct snake_t *head)
+void go(struct snake_t *head, int color)
 {
+    setColor(color + 1);
     char ch = '@';
     int max_x=0, max_y=0;
     getmaxyx(stdscr, max_y, max_x); // macro - размер терминала
@@ -209,8 +226,9 @@ void changeDirection(struct snake_t* snake, const int32_t key)
 /*
  Движение хвоста с учетом движения головы
  */
-void goTail(struct snake_t *head)
+void goTail(struct snake_t *head, int color)
 {
+    setColor(color + 1);
     char ch = '*';
     mvprintw(head->tail[head->tsize-1].y, head->tail[head->tsize-1].x, " ");
     for(size_t i = head->tsize-1; i>0; i--)
@@ -311,8 +329,8 @@ void autoChangeDirection(snake_t *snake, struct food food[], int foodSize)
         snake->direction = (food[pointer].x > snake->x) ? RIGHT : LEFT;
     }
 }
-
 //========================================================================
+
 // Вынести тело цикла while из int main() в отдельную функцию update
 
 void update(struct snake_t *head, struct food f[], const int32_t key_pressed, int ai)
@@ -324,8 +342,8 @@ void update(struct snake_t *head, struct food f[], const int32_t key_pressed, in
             changeDirection(head, key_pressed);
 
     clock_t begin = clock();
-    go(head);
-    goTail(head);
+    go(head, ai);
+    goTail(head, ai);
 
     if(key_pressed != ERR && checkDirection(head, key_pressed)) // нажата ли клавиша и если вдижение змейки и направление нажатия корректны
         changeDirection(head, key_pressed);
@@ -355,15 +373,20 @@ int main()
     curs_set(FALSE);      // Отключаем курсор
     mvprintw(0, 1, "Use arrows for control. Press 'F10' for EXIT");
     timeout(0);           // Отключаем таймаут после нажатия клавиши в цикле
-
+    start_color();
     initFood(food, MAX_FOOD_SIZE);
-    putFood(food, SEED_NUMBER);// Кладем зерна
 
+    init_pair(1, COLOR_RED, COLOR_BLACK);
+    init_pair(2, COLOR_BLUE, COLOR_BLACK);
+    init_pair(3, COLOR_GREEN, COLOR_BLACK);
+
+
+    putFood(food, SEED_NUMBER);// Кладем зерна
     int key_pressed = 0;
     int game_over = 0;
     while(key_pressed != STOP_GAME && !game_over)
     {
-        key_pressed = getch(); // Считываем клавишу                                // Считываем клавишу c задержкой 100 мс
+        key_pressed = getch();                                               // Считываем клавишу
         for (int i = 0; i < PLAYERS; i++)
         {
             update(snakes[i], food, key_pressed, i);
