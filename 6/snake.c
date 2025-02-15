@@ -10,6 +10,13 @@
 #define CONTROLS 2
 double DELAY = 0.05;
 #define PLAYERS  2
+#define MENU_ITEMS 3 
+
+const char *choices[MENU_ITEMS] = {
+    "1. Single playr",
+    "2. 1x1",
+    "3. About"
+};
 
 enum {LEFT = 1, UP, RIGHT, DOWN, STOP_GAME = KEY_F(10)};
 enum {MAX_TAIL_SIZE = 100, START_TAIL_SIZE = 3, MAX_FOOD_SIZE = 20, FOOD_EXPIRE_SECONDS = 10, SEED_NUMBER = 3};
@@ -61,6 +68,68 @@ struct food
     uint8_t enable;
 } food[MAX_FOOD_SIZE];
 
+void initColor(int color_snake_1, int color_snake_2)
+{
+    start_color();                              // Включаем работу с цветами
+    init_pair(1, color_snake_1, COLOR_BLACK);
+    init_pair(2, color_snake_2, COLOR_BLACK);
+    init_pair(3, COLOR_GREEN, COLOR_BLACK);
+}
+
+//============================================================================
+void startMenu(WINDOW *win, int highlight, const char **choices, int n_choices) 
+{
+    int max_y, max_x;
+    getmaxyx(win, max_y, max_x); // Получаем размеры окна
+
+    // Вычисляем начальные координаты для отрисовки меню по центру
+    int start_y = (max_y - n_choices) / 2; // Центр по вертикали
+    int start_x = (max_x - 20) / 2;        // Центр по горизонтали (20 - примерная ширина меню)
+
+    for (int i = 0; i < n_choices; i++) 
+    {
+        if (highlight == i + 1)
+        { // Если пункт выделен
+            wattron(win, A_REVERSE); // Включаем инверсию цвета
+            mvwprintw(win, start_y + i, start_x, "%s", choices[i]);
+            wattroff(win, A_REVERSE); // Выключаем инверсию цвета
+        }
+        else 
+        {
+            mvwprintw(win, start_y + i, start_x, "%s", choices[i]);
+        }
+    }
+    wrefresh(win);
+}
+
+int navigationMenu(int key_pressed, int highlight)
+{
+    switch(key_pressed)
+    {
+        case KEY_UP:
+            if(highlight == 1)
+                return MENU_ITEMS; // Переход вниз, если достигнут верх
+            else
+                return --highlight;
+            break;
+        case KEY_DOWN:
+            if(highlight == MENU_ITEMS)
+                return 1;          // Переход вверх, если достигнут низ 
+            else 
+                return ++highlight;
+            break;
+        case 10: // Код клавиши Enter
+            return 0;
+            break;
+        default:
+            return 0;
+            break;
+    }
+
+}
+
+//============================================================================
+
 void initFood(struct food f[], size_t size)
 {
     struct food init = {0};
@@ -68,7 +137,8 @@ void initFood(struct food f[], size_t size)
         f[i] = init;
 }
 
-//========================================================================
+
+
 void setColor(int objectType)
 {
     attroff(COLOR_PAIR(1));
@@ -90,7 +160,6 @@ void setColor(int objectType)
         }
     }
 }
-//========================================================================
 
 /*
  Обновить/разместить текущее зерно на поле
@@ -352,10 +421,10 @@ void update(struct snake_t *head, struct food f[], const int32_t key_pressed, in
     addTail(head);                                          // Добавляем + 1 к хвосту
 
     refreshFood(food, SEED_NUMBER);                         // Обновляем еду
-    repairSeed(food, SEED_NUMBER, head);                   // Определяем корректность установки зерен
+    repairSeed(food, SEED_NUMBER, head);                    // Определяем корректность установки зерен
                                                             // Если не правильно обновляем зерна
-    refresh();                                            //Обновление экрана, вывели кадр анимации
-    while ((double)(clock() - begin)/CLOCKS_PER_SEC < DELAY)
+    refresh();                                              // Обновление экрана, вывели кадр анимации
+    while ((double)(clock() - begin) / CLOCKS_PER_SEC < DELAY)
     {}
 }
 
@@ -371,18 +440,46 @@ int main()
     raw();                // Откдючаем line buffering
     noecho();             // Отключаем echo() режим при вызове getch
     curs_set(FALSE);      // Отключаем курсор
-    mvprintw(0, 1, "Use arrows for control. Press 'F10' for EXIT");
+    mvprintw(0, 1, "Use arrows for control. Press 'F10' for EXIT. Enter to select:");
+    initColor(COLOR_RED, COLOR_BLUE);          // Инизиализируем цвета для меню
+    int highlight = 1;    // Переменная для выбора
+    int key_pressed = 0;
+    int choice = 0;
+    while(1)
+    { 
+        startMenu(stdscr, highlight, choices, MENU_ITEMS);         // Отрисовываем меню
+        key_pressed = getch();
+        switch (key_pressed) {
+            case KEY_UP:
+                if (highlight == 1) {
+                    highlight = MENU_ITEMS; // Переход вниз, если достигнут верх
+                } else {
+                    highlight--;
+                }
+                break;
+            case KEY_DOWN:
+                if (highlight == MENU_ITEMS) {
+                    highlight = 1; // Переход вверх, если достигнут низ
+                } else {
+                    highlight++;
+                }
+                break;
+            case 10: // Код клавиши Enter
+                choice = highlight;
+                break;
+            default:
+                break;
+        }
+        if (choice != 0) // Если пункт выбран
+            break;
+    }                              
+
     timeout(0);           // Отключаем таймаут после нажатия клавиши в цикле
-    start_color();
     initFood(food, MAX_FOOD_SIZE);
 
-    init_pair(1, COLOR_RED, COLOR_BLACK);
-    init_pair(2, COLOR_BLUE, COLOR_BLACK);
-    init_pair(3, COLOR_GREEN, COLOR_BLACK);
-
-
-    putFood(food, SEED_NUMBER);// Кладем зерна
-    int key_pressed = 0;
+    clear();                                   // Очищаем экран
+    putFood(food, SEED_NUMBER);                // Кладем зерна
+    key_pressed = 0;
     int game_over = 0;
     while(key_pressed != STOP_GAME && !game_over)
     {
