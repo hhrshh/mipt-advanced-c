@@ -8,14 +8,14 @@
 
 #define MIN_Y 2
 #define CONTROLS 2
-double DELAY = 0.05;
+const double DELAY = 0.05;
 #define PLAYERS  2
 #define MENU_ITEMS 3 
 
 const char *choices[MENU_ITEMS] = {
-    "1. Single playr",
-    "2. 1x1",
-    "3. About"
+    "Single playr",
+    "PVP",
+    "About"
 };
 
 enum {LEFT = 1, UP, RIGHT, DOWN, STOP_GAME = KEY_F(10)};
@@ -373,16 +373,12 @@ void repairSeed(struct food f[], size_t nfood, struct snake_t *head)
         }
 }
 
-//======Добавление ИИ========================================================   
-
+// Добавление ИИ   
 int distance(const snake_t snake, const struct food food) {   // вычисляет количество ходов до еды
     return (abs(snake.x - food.x) + abs(snake.y - food.y));
 }
-//Для автоизменения направления напишем функцию
-//Она определяет ближайшую к себе еду и движется по направлению к ней
-
-
-
+// Для автоизменения направления напишем функцию
+// Она определяет ближайшую к себе еду и движется по направлению к ней
 
 void autoChangeDirection(snake_t *snake, struct food food[], int foodSize)
 {
@@ -398,11 +394,9 @@ void autoChangeDirection(snake_t *snake, struct food food[], int foodSize)
         snake->direction = (food[pointer].x > snake->x) ? RIGHT : LEFT;
     }
 }
-//========================================================================
 
 // Вынести тело цикла while из int main() в отдельную функцию update
-
-void update(struct snake_t *head, struct food f[], const int32_t key_pressed, int ai)
+void update(struct snake_t *head, struct food f[], const int32_t key_pressed, int ai, int color)
 {
     if(ai)                                                   // для каждого плеера свое управление
         autoChangeDirection(head, f, SEED_NUMBER);
@@ -411,8 +405,8 @@ void update(struct snake_t *head, struct food f[], const int32_t key_pressed, in
             changeDirection(head, key_pressed);
 
     clock_t begin = clock();
-    go(head, ai);
-    goTail(head, ai);
+    go(head, color);
+    goTail(head, color);
 
     if(key_pressed != ERR && checkDirection(head, key_pressed)) // нажата ли клавиша и если вдижение змейки и направление нажатия корректны
         changeDirection(head, key_pressed);
@@ -486,7 +480,8 @@ int main()
         key_pressed = getch();                                               // Считываем клавишу
         for (int i = 0; i < PLAYERS; i++)
         {
-            update(snakes[i], food, key_pressed, i);
+                
+            update(snakes[i], food, key_pressed, choice == 2 ? 0 : i, i);
             if(isCrush(snakes[i]))                                           // Проверяем, если голова пересекла тело
             {
                 mvprintw(10, 35, "GAME OVER!");
