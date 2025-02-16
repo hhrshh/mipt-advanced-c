@@ -10,15 +10,16 @@
 #define CONTROLS 2
 const double DELAY = 0.05;
 #define PLAYERS  2
-#define MENU_ITEMS 3 
+#define MENU_ITEMS 4 
 #define MENU_COLORS 6
 #define W 119
 #define S 115
 
 const char *choices[MENU_ITEMS] = {
-    "Single playr",
-    "PvP",
-    "About"
+        "1. Single Player",
+        "2. PvP Mode",
+        "3. Help",
+        "4. Exit"
 };
 
 const char *colorMenu[MENU_COLORS] = {
@@ -32,7 +33,7 @@ const char *colorMenu[MENU_COLORS] = {
 
 enum {LEFT = 1, UP, RIGHT, DOWN, STOP_GAME = KEY_F(10)};
 enum {MAX_TAIL_SIZE = 100, START_TAIL_SIZE = 3, MAX_FOOD_SIZE = 20, FOOD_EXPIRE_SECONDS = 10, SEED_NUMBER = 3};
-enum {SINGLE_PLAYER = 1, PVP, ABOUT};
+enum {SINGLE_PLAYER = 1, PVP, HELP, EXIT};
 
 // Здесь храним коды управления змейкой
 struct control_buttons
@@ -142,6 +143,50 @@ void setColor(int objectType)
     }
 }
 
+void drawMainMenu(void) 
+{
+
+    int max_x = getmaxx(stdscr);
+    int max_y = getmaxy(stdscr);
+
+    // Центрируем заголовок и меню
+    int start_x = (max_x - 40) / 2; // Ширина ASCII-арта примерно 40 символов
+    int start_y = (max_y - 17) / 2; // Высота меню примерно 15 строк
+
+    // Рамка вокруг меню (используем ASCII-символы)
+    attron(COLOR_PAIR(7)); // Зеленый цвет для рамки
+    for (int i = start_x - 2; i <= start_x + 36; i++)
+    {
+        mvprintw(start_y - 2, i, "-");
+        mvprintw(start_y + 16, i, "-");
+    }
+    for (int i = start_y - 1; i <= start_y + 16; i++)
+    {
+        mvprintw(i, start_x - 2, "|");
+        mvprintw(i, start_x + 36, "|");
+    }
+    mvprintw(start_y - 2, start_x - 2, "+");
+    mvprintw(start_y - 2, start_x + 36, "+");
+    mvprintw(start_y + 16, start_x - 2, "+");
+    mvprintw(start_y + 16, start_x + 36, "+");
+    attroff(COLOR_PAIR(7));
+
+    // ASCII-арт для заголовка "SnakeGO"
+    attron(COLOR_PAIR(7)); // Зеленый цвет для змейки
+    mvprintw(start_y, start_x + 4,     "   _____   _____   ___      ");
+    mvprintw(start_y + 1, start_x + 4, "  / ____| / ____| / _ \\     ");
+    mvprintw(start_y + 2, start_x + 4, " | (___  | |  __ | | | |    ");
+    mvprintw(start_y + 3, start_x + 4, "  \\___ \\ | | |_ || | | |    ");
+    mvprintw(start_y + 4, start_x + 4, "  ____) || |__| || |_| |    ");
+    mvprintw(start_y + 5, start_x + 4, " |_____/  \\_____| \\___/     ");
+    attroff(COLOR_PAIR(7));
+
+    // Инструкция по управлению
+    attron(COLOR_PAIR(6)); // Белый цвет для текста
+    mvprintw(start_y + 7, start_x, "Use ARROW and W S, ENTER to select.");
+    mvprintw(start_y + 8, start_x, "Press F10 to exit the game.");
+    attroff(COLOR_PAIR(6));
+}
 //===============================================================================================================
 
 void startMenu(WINDOW *win, int highlight1, int highlight2, const char **choices, int n_choices) 
@@ -150,18 +195,24 @@ void startMenu(WINDOW *win, int highlight1, int highlight2, const char **choices
     getmaxyx(win, max_y, max_x); // Получаем размеры окна
 
     // Вычисляем начальные координаты для отрисовки меню по центру
-    int start_y = (max_y - n_choices) / 2;      // Центр по вертикали
-    int start_x = (max_x - 20) / 2;             // Центр по горизонтали (20 - примерная ширина меню)
+    int start_y = (max_y - n_choices - 6) / 2;      // Центр по вертикали
+    int start_x = (max_x - 42) / 2;             // Центр по горизонтали (20 - примерная ширина меню)
 
     for (int i = 0; i < n_choices; i++) 
     {
         if (highlight1 == i + 1 || highlight2 == i + 1)
         {
             wattron(win, A_REVERSE);
+            if(highlight2 != 0)
+            {
+                wattroff(win, A_REVERSE);
+                setColor(i + 1);
+                mvwprintw(win, start_y + 7 + i, start_x + 18, "@***"); // Стрелочка перед выбранным пунктом
+            }
         }
         if(highlight2 != 0)                                     // Для меню с выбором для двух
-            setColor(i+1);
-        mvwprintw(win, start_y + i, start_x, "%s", choices[i]);
+            setColor(i + 1);
+        mvwprintw(win, start_y + 7 + i, start_x + 10, "%s", choices[i]);
         if (highlight1 == i + 1 || highlight2 == i + 1)
         {
             wattroff(win, A_REVERSE);
@@ -475,33 +526,58 @@ void update(struct snake_t *head, struct food f[], const int32_t key_pressed, in
     {}
 }
 
+void showHelpMenu(void)
+{
+    clear(); // Clear the screen
+    attron(COLOR_PAIR(7));
+    mvprintw(1, 1, "=== Control Instructions ===");
+    mvprintw(3, 1, "Menu Controls:");
+    mvprintw(4, 1, "Player 1: UP, DOWN, Enter");
+    mvprintw(5, 1, "Player 2: W, S, Enter");
+    mvprintw(7, 1, "In-Game Controls:");
+    mvprintw(8, 1, "Player 1: UP, DOWN, LEFT, RIGHT");
+    mvprintw(9, 1, "Player 2: W, S, A, D");
+    mvprintw(11, 1, "General Keys:");
+    mvprintw(12, 1, "F10: Exit to Main Menu");
+    mvprintw(14, 1, "=== Game Rules ===");
+    mvprintw(15, 1, "1. Eat food ($) to grow.");
+    mvprintw(16, 1, "2. Avoid collisions with your tail and walls.");
+    mvprintw(17, 1, "3. In PvP, the player with the highest score wins.");
+    mvprintw(19, 1, "Press any key to return to the menu...");
+    refresh();
+    getch(); // возврат в главное меню
+    attroff(COLOR_PAIR(7));
+}
+
 //========================================================================
 
 int main()
 {
-    snake_t* snakes[PLAYERS];
-    for (int i = 0; i < PLAYERS; i++)
-        initSnake(snakes,START_TAIL_SIZE, 10 + i * 10, 10 + i * 10, i);
     initscr();
     keypad(stdscr, TRUE); // Включаем F1, F2, стрелки и т.д.
     raw();                // Откдючаем line buffering
     noecho();             // Отключаем echo() режим при вызове getch
     curs_set(FALSE);      // Отключаем курсор
-    mvprintw(0, 1, "Use arrows for control. Press 'F10' for EXIT. Enter to select:");
     initColor();          // Инизиализируем цвета для меню
     int highlight1 = 1, highlight2 = 2;    // Переменная для выбора
-    
     int key_pressed = 0;
     int choice = 0;
     int color1 = 0, color2 = 2;
 
-
-    while(key_pressed != STOP_GAME)                                                     // Главное меню, выбор режима игры.
-    { 
+  //=====================Меню=========================================================================================================//
+    MAIN_MENU:
+    
+    while(1)                                                     // Главное меню, выбор режима игры.
+    {
+        drawMainMenu();
         startMenu(stdscr, highlight1, 0, choices, MENU_ITEMS);                          // Отрисовываем меню
         key_pressed = getch();                                                          // Считываем нажатую клавишу
         choice = navigationMenu(key_pressed, &highlight1, MENU_ITEMS, 1);               // Навигация и выбор элемента
-
+        if(key_pressed == STOP_GAME)
+        {
+            endwin();                                                               // Завершаем режим curses mod
+            return 0;
+        }
         if (choice != 0)                                                                // Если пункт выбран выходим в следуюищее меню
             break;
     }
@@ -510,12 +586,17 @@ int main()
     {
     case SINGLE_PLAYER:
         highlight1 = 1;                                                                 // Первый элемент
-        while(key_pressed != STOP_GAME)                                                        
+        while(1)                                                        
         {
             clear();                                                                    // Очищаем экран
-            mvprintw(0, 1, "Use arrows for control. Press 'F10' for EXIT. Enter to select:");
+            drawMainMenu();
             startMenu(stdscr, highlight1, highlight2, colorMenu, MENU_COLORS);          // Отрисовываем меню
-            key_pressed = getch();                                                      // Считываем нажатую клавишу
+            key_pressed = getch();
+            if(key_pressed == STOP_GAME)
+            {
+                endwin();                                                               // Завершаем режим curses mod
+                return 0;
+            }                                                    // Считываем нажатую клавишу
             color1 = navigationMenu(key_pressed, &highlight1, MENU_COLORS, 1);          // Навигация и выбор элемента
             color2 = navigationMenu(key_pressed, &highlight2, MENU_COLORS, 2);          // Навигация и выбор элемента
             if(color1 != 0)                                                             // Если пункт выбран выходим в следуюищее меню
@@ -524,27 +605,40 @@ int main()
         break;
     case PVP:
         highlight1 = 1;                                                                 // Второй элемент
-        while(key_pressed != STOP_GAME)                                 
+        while(1)                                 
         {
             clear();                                                                    // Очищаем экран
-            mvprintw(0, 1, "Use arrows for control. Press 'F10' for EXIT. Enter to select:");
+            drawMainMenu();
             startMenu(stdscr, highlight1, highlight2, colorMenu, MENU_COLORS);          // Отрисовываем меню
-            key_pressed = getch();                                                      // Считываем нажатую клавишу
+            key_pressed = getch();
+            if(key_pressed == STOP_GAME)
+            {
+                endwin();                                                               // Завершаем режим curses mod
+                return 0;
+            }                                                      // Считываем нажатую клавишу
             color1 = navigationMenu(key_pressed, &highlight1, MENU_COLORS, 1);          // Навигация и выбор элемента
             color2 = navigationMenu(key_pressed, &highlight2, MENU_COLORS, 2);
             if(color1 != 0)                                                             // Если пункт выбран выходим в следуюищее меню
                 break;
         }
         break;
-    case ABOUT:                                                            // Третьий элемент
-            clear();                                                       // Очищаем экран
-            mvprintw(0, 1, "Use arrows for control. Press 'F10' for EXIT. Enter to select:");
-            key_pressed = getch();
-        break;    
+    case HELP:                                                            // Третьий элемент
+            showHelpMenu();
+            clear();
+            goto MAIN_MENU;
+        break;
+    case EXIT:
+            endwin();
+            return 0;
+        break;
     default:
         break;
     }
-    
+    //=====================Меню=========================================================================================================//
+    snake_t* snakes[PLAYERS];
+    for (int i = 0; i < PLAYERS; i++)
+        initSnake(snakes,START_TAIL_SIZE, 10 + i * 10, 10 + i * 10, i);
+
     timeout(0);                                                             // Отключаем таймаут после нажатия клавиши в цикле
     initFood(food, MAX_FOOD_SIZE);
 
