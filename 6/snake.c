@@ -32,7 +32,7 @@ const char *colorMenu[MENU_COLORS] = {
 };
 
 enum {LEFT = 1, UP, RIGHT, DOWN, STOP_GAME = KEY_F(10)};
-enum {MAX_TAIL_SIZE = 100, START_TAIL_SIZE = 3, MAX_FOOD_SIZE = 20, FOOD_EXPIRE_SECONDS = 10, SEED_NUMBER = 3};
+enum {MAX_TAIL_SIZE = 100, START_TAIL_SIZE = 13, MAX_FOOD_SIZE = 20, FOOD_EXPIRE_SECONDS = 10, SEED_NUMBER = 3};
 enum {SINGLE_PLAYER = 1, PVP, HELP, EXIT};
 
 // Здесь храним коды управления змейкой
@@ -499,6 +499,19 @@ void autoChangeDirection(snake_t *snake, struct food food[], int foodSize)
     }
 }
 
+// Показывает результаты, сколько было съедено семян
+void showScores(struct snake_t *head, int snake, int color)
+{
+    int max_x = getmaxx(stdscr);
+    int max_y = getmaxy(stdscr);
+    setColor(color);
+    if(!snake)
+        mvprintw(0, 0, "Snake1 - %lu", head->tsize - 4);
+    else
+        mvprintw(0, max_x - 11, "Snake2 - %lu", head->tsize - 4);
+    refresh();
+}
+
 // Вынести тело цикла while из int main() в отдельную функцию update
 void update(struct snake_t *head, struct food f[], const int32_t key_pressed, int ai, int color)
 {
@@ -507,7 +520,7 @@ void update(struct snake_t *head, struct food f[], const int32_t key_pressed, in
     else 
         if(checkDirection(head, key_pressed)) 
             changeDirection(head, key_pressed);
-
+            
     clock_t begin = clock();
     go(head, color);
     goTail(head, color);
@@ -559,6 +572,9 @@ int main()
     noecho();             // Отключаем echo() режим при вызове getch
     curs_set(FALSE);      // Отключаем курсор
     initColor();          // Инизиализируем цвета для меню
+    
+    int max_x = getmaxx(stdscr); // определяем координаты max X
+    int max_y = getmaxy(stdscr); // определяем координаты max Y
     int highlight1 = 1, highlight2 = 2;    // Переменная для выбора
     int key_pressed = 0;
     int choice = 0;
@@ -651,11 +667,12 @@ int main()
         key_pressed = getch();                                              // Считываем клавишу
         for (int i = 0; i < PLAYERS; ++i)
         {  
-
+            showScores(snakes[i], i, i ? color1 : color2);
             update(snakes[i], food, key_pressed, choice == 2 ? 0 : i, i ? color1 : color2);
             if(isCrush(snakes[i]))                                          // Проверяем, если голова пересекла тело
             {
-                mvprintw(10, 35, "GAME OVER!");
+                mvprintw(10, 35, "GAME OVER");
+                mvprintw(11, 34, "SNAKE%d WIN!", !i + 1);
                 refresh();
                 snake_getch_delay(2000);                                    // Задержка для прочтения GAME OVER!
                 game_over = 1;
