@@ -92,83 +92,6 @@ void initColor(void)
     init_pair(7, COLOR_GREEN, COLOR_BLACK);
 }
 
-//===============================================================================================================
-
-void startMenu(WINDOW *win, int highlight1, int highlight2, const char **choices, int n_choices) 
-{
-    int max_y, max_x;
-    getmaxyx(win, max_y, max_x); // Получаем размеры окна
-
-    // Вычисляем начальные координаты для отрисовки меню по центру
-    int start_y = (max_y - n_choices) / 2;      // Центр по вертикали
-    int start_x = (max_x - 20) / 2;             // Центр по горизонтали (20 - примерная ширина меню)
-
-    for (int i = 0; i < n_choices; i++) 
-    {
-        if (highlight1 == i + 1 || highlight2 == i + 1)
-        {
-            wattron(win, A_REVERSE);
-        }
-        mvwprintw(win, start_y + i, start_x, "%s", choices[i]);
-        if (highlight1 == i + 1 || highlight2 == i + 1)
-        {
-            wattroff(win, A_REVERSE);
-        }
-    }
-    wrefresh(win);
-}
-
-int navigationMenu(int key_pressed, int* highlight, int menu_items, int player)
-{
-    switch(key_pressed)
-    {
-        case W:
-            if(player == 2)
-            {
-                *highlight = (*highlight == 1) ? menu_items : (*highlight - 1);
-                return 0;
-            }
-            break;
-        case KEY_UP:
-            if(player == 1)
-            {
-                *highlight = (*highlight == 1) ? menu_items : (*highlight - 1);
-                return 0;
-            }
-            break;
-        case S:
-            if(player == 2)
-            {
-                *highlight = (*highlight == menu_items) ? 1 : (*highlight + 1);
-                return 0;
-            }
-            break;
-        case KEY_DOWN:
-            if(player == 1)
-            {
-                *highlight = (*highlight == menu_items) ? 1 : (*highlight + 1);
-                return 0;
-            }
-            break;
-        case 10: // Код клавиши Enter
-            return *highlight;
-        default:
-            return 0;
-    }
-    return 0;
-}
-
-//===============================================================================================================
-
-void initFood(struct food f[], size_t size)
-{
-    struct food init = {0};
-    for(size_t i = 0; i < size; i++)
-        f[i] = init;
-}
-
-
-
 void setColor(int objectType)
 {
     attroff(COLOR_PAIR(1));
@@ -178,6 +101,7 @@ void setColor(int objectType)
     attroff(COLOR_PAIR(5));
     attroff(COLOR_PAIR(6));
     attroff(COLOR_PAIR(7));
+
     switch (objectType)
     {
         case 1:
@@ -216,6 +140,79 @@ void setColor(int objectType)
             break;
         }
     }
+}
+
+//===============================================================================================================
+
+void startMenu(WINDOW *win, int highlight1, int highlight2, const char **choices, int n_choices) 
+{
+    int max_y, max_x;
+    getmaxyx(win, max_y, max_x); // Получаем размеры окна
+
+    // Вычисляем начальные координаты для отрисовки меню по центру
+    int start_y = (max_y - n_choices) / 2;      // Центр по вертикали
+    int start_x = (max_x - 20) / 2;             // Центр по горизонтали (20 - примерная ширина меню)
+
+    for (int i = 0; i < n_choices; i++) 
+    {
+        if (highlight1 == i + 1 || highlight2 == i + 1)
+        {
+            wattron(win, A_REVERSE);
+        }
+        if(highlight2 != 0)                                     // Для меню с выбором для двух
+            setColor(i+1);
+        mvwprintw(win, start_y + i, start_x, "%s", choices[i]);
+        if (highlight1 == i + 1 || highlight2 == i + 1)
+        {
+            wattroff(win, A_REVERSE);
+        }
+    }
+    wrefresh(win);
+}
+
+int navigationMenu(int key_pressed, int* highlight, int menu_items, int player)
+{
+    switch(key_pressed)
+    {
+        case 'w': // Используем символ 'w'
+            if (player == 2) {
+                *highlight = (*highlight == 1) ? menu_items : (*highlight - 1);
+                return 0;
+            }
+            break;
+        case KEY_UP:
+            if (player == 1) {
+                *highlight = (*highlight == 1) ? menu_items : (*highlight - 1);
+                return 0;
+            }
+            break;
+        case 's': // Используем символ 's'
+            if (player == 2) {
+                *highlight = (*highlight == menu_items) ? 1 : (*highlight + 1);
+                return 0;
+            }
+            break;
+        case KEY_DOWN:
+            if (player == 1) {
+                *highlight = (*highlight == menu_items) ? 1 : (*highlight + 1);
+                return 0;
+            }
+            break;
+        case 10: // Код клавиши Enter
+            return *highlight;
+        default:
+            return 0;
+    }
+    return 0;
+}
+
+//===============================================================================================================
+
+void initFood(struct food f[], size_t size)
+{
+    struct food init = {0};
+    for(size_t i = 0; i < size; i++)
+        f[i] = init;
 }
 
 /*
