@@ -113,7 +113,7 @@ int main(void)
         //printf("Added node with key = %d\n", values[i]);
     }
 
-    printf("Serch key: %p", search_tree(root, 4));
+    printf("Serch key: %p", findBrother(root, 4));
     deleteTree(root);
     return 0;
 }
