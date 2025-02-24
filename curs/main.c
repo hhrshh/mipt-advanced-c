@@ -11,6 +11,7 @@
 
 int main(int argc, char* argv[])
 {
+    
     int rez = 0;
     int print_roots = 0, print_iterations = 0, print_test_r = 0, print_test_i = 0;
     float eps1 = 0.0001;
@@ -62,5 +63,6 @@ int main(int argc, char* argv[])
         }
     }
 
+    printf("hello!\n");
     return 0;
 }

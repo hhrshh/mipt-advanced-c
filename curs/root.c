@@ -3,7 +3,10 @@
 #include "integral.h"
 #include "func.h"
 #include "root.h"
+<<<<<<< HEAD
 
+=======
+>>>>>>> 334a4c628f97a9fb8db80f69fe484ea10a58e1da
 int  signF(float x)
 {
     return f(x) == 0 ? 0 : (f(x) < 0 ? -1 : +1);

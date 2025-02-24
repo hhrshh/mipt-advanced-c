@@ -1,5 +1,6 @@
 #ifndef MAIN_H
 #define MAIN_H
+
 #define OPTIONS_USAGE "Usage: areafinder [OPTION]...\n"
 #define OPTIONS_DESCRIPTION "A program to calculate the area between three functions, find their intersection points, \
 and display the number of iterations for root-finding. Supports command-line options for precision and help.\n"
