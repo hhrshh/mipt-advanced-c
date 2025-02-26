@@ -10,8 +10,7 @@ and display the number of iterations for root-finding. Supports command-line opt
 #define OPTIONS_r "  -r the abscissas of the points of intersection of the curves.\n"
 #define OPTIONS_e "  -e ebs, the precision for finding the root of the equation.\n"
 #define OPTIONS_E "  -E ebs, the precision for computing the integral.\n"
-#define OPTIONS_t "  -t test the function root\n"
-#define OPTIONS_T "  -T test the faunction integral\n"
+#define OPTIONS_t "  -t test the function root and integral\n"
 
 #define OPTIONS_ERROR "Error argument: %s, try -h for help.\n", argv[optind-1]
 #endif

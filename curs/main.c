@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
 {
     
     int rez = 0;
-    int print_roots = 0, print_iterations = 0, print_test_r = 0, print_test_i = 0;
+    int printRoots = 0, printIterations = 0, printArea = 0, printTest = 0;
     float eps1 = 0.0001;
     float eps2 = 1000;
 
@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
         printf(OPTIONS_HELP);
     }   
                 
-    while((rez = getopt(argc,argv,"hHritTe:E:")) != -1)
+    while((rez = getopt(argc, argv,"hHriate:E:")) != -1)
     {
         switch(rez)
         {
@@ -35,20 +35,19 @@ int main(int argc, char* argv[])
                     OPTIONS_e
                     OPTIONS_E
                     OPTIONS_t
-                    OPTIONS_T
                     OPTIONS_USAGE);
                 break;
             case 't':
-                print_test_r = 1;
+                printTest = 1;
                 break;
-            case 'T':
-                print_test_i = 1;
+            case 'a':
+                printArea = 1;
                 break;
             case 'r':
-                print_roots = 1;
+                printRoots = 1;
                 break;
             case 'i':
-                print_iterations = 1;
+                printIterations = 1;
                 break;
             case 'e':
                 eps1 = atof(optarg);
@@ -63,5 +62,40 @@ int main(int argc, char* argv[])
         }
     }
 
+    if(printRoots)
+    {
+        printf("Root for f1 - f2 = 0: %f\n\n", rootFindTangent(0., eps1, f1, f2, df1, df2, printIterations)); // вычисление корней
+        printf("Root for f2 - f3 = 0: %f\n\n", rootFindTangent(2., eps1, f2, f3, df2, df3, printIterations));
+        printf("Root for f1 - f3 = 0: %f\n", rootFindTangent(0.5, eps1, f3, f1, df3, df1, printIterations));
+    }
+
+    if(printArea)
+    {
+        float r1 =  rootFindTangent(0.5, eps1, f3, f1, df3, df1, 0);
+        float r2 =  rootFindTangent(2., eps1, f2, f3, df2, df3, 0);
+        float r3 =  rootFindTangent(0., eps1, f1, f2, df1, df2, 0);
+
+        printf("\nArea bounded by f1, f2, f3 = %f\n",  calcIntegralSimpson(r1, r3, eps2, f1) - 
+        (calcIntegralSimpson(r1, r2, eps2, f3) + calcIntegralSimpson(r2, r3, eps2, f2))); // вычисление площади
+    }
+
+    if(printTest)
+    {
+        printf("\n=== Testing roots of func f(x) = 8x^4 + 32x^3 + 40x^2 + 16x + 1 - [-1.5, -1.2] [-0.8, -0.4] : ===\n");
+        printf("============================== Expected values: -1.382 and -0.617 ===============================\n");
+        float root1 = rootFindTangent(-1.5, 0.0001, test_f1, test_f2, test_df1, test_df2, 0);
+        printf("%f\n", root1);
+        printf("%s\n", (int)(root1 * 100) / 100. == -1.38  ? "Test passed" : "Test not passed");
+
+        float root2 = rootFindTangent(-0.8, 0.0001, test_f1, test_f2, test_df1, test_df2, 0);
+        printf("%f\n", root2);
+        printf("%s\n", (int)(root2 * 100) / 100. == -0.61  ? "Test passed" : "Test not passed");
+        
+        printf("\n================== Testing area calculation: Calculating the area of square 2x2 =================\n");
+        float integral = calcIntegralSimpson(0, 2, eps2, test_integral);
+        printf("%f\n", integral);
+        printf("%s\n", (int)(integral * 100) / 100. == 3.99  ? "Test passed" : "Test not passed");
+
+    }
     return 0;
 }
