@@ -4,11 +4,13 @@
 #include "func.h"
 #include "root.h"
 
+// Метод касательных (Ньютона) для нахождения корня уравнения f1(x) = f2(x)
 float rootFindTangent(float xn, float eps, function f1, function f2, function df1, function df2, int printIterations) 
 {
     float x1  = xn - (f1(xn) + f2(xn)) / (df1(xn) - df2(xn));
     float x0  = xn;
-    int stepcount = 0;    
+    int stepcount = 0;
+    // Итерационный процесс до достижения точности
     while(fabs(x0 - x1) > eps)
     {
         if (stepcount > 1000) // Защита от бесконечного цикла

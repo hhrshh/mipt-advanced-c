@@ -14,21 +14,24 @@ int main(int argc, char* argv[])
     
     int rez = 0;
     int printRoots = 0, printIterations = 0, printArea = 0, printTest = 0;
-    float eps1 = 0.0001;
-    float eps2 = 1000;
+    float eps1 = 0.0001; // Точность для нахождения корней
+    float eps2 = 1000;  // Точность для вычисления интеграла
 
+    // Если аргументы не переданы, выводим справку
     if(argc <= 1)
     {
         printf(OPTIONS_USAGE);
         printf(OPTIONS_HELP);
     }   
-                
+    
+    // Обработка аргументов командной строки            
     while((rez = getopt(argc, argv,"hHriate:E:")) != -1)
     {
         switch(rez)
         {
             case 'H':
             case 'h':
+            // Вывод справки
                 printf(OPTIONS_DESCRIPTION
                     OPTIONS_r
                     OPTIONS_i
@@ -38,25 +41,25 @@ int main(int argc, char* argv[])
                     OPTIONS_USAGE);
                 break;
             case 't':
-                printTest = 1;
+                printTest = 1; // Включить тестирование
                 break;
             case 'a':
-                printArea = 1;
+                printArea = 1; // Вычислить площадь
                 break;
             case 'r':
-                printRoots = 1;
+                printRoots = 1; // Найти корни
                 break;
             case 'i':
-                printIterations = 1;
+                printIterations = 1; // Вывести количество итераций
                 break;
             case 'e':
-                eps1 = atof(optarg);
+                eps1 = atof(optarg); // Установить точность для корней
                 break;
             case 'E':
-                eps2 = atof(optarg);
+                eps2 = atof(optarg); // Установить точность для интеграла
                 break;
             case '?':
-                printf(OPTIONS_ERROR);
+                printf(OPTIONS_ERROR); // Ошибка аргумента
                 return 1;
                 break;
         }
@@ -68,7 +71,8 @@ int main(int argc, char* argv[])
         printf("Root for f2 - f3 = 0: %f\n\n", rootFindTangent(2., eps1, f2, f3, df2, df3, printIterations));
         printf("Root for f1 - f3 = 0: %f\n", rootFindTangent(0.5, eps1, f3, f1, df3, df1, printIterations));
     }
-
+    
+    // Вычисление площади между функциями
     if(printArea)
     {
         float r1 =  rootFindTangent(0.5, eps1, f3, f1, df3, df1, 0);
@@ -79,6 +83,7 @@ int main(int argc, char* argv[])
         (calcIntegralSimpson(r1, r2, eps2, f3) + calcIntegralSimpson(r2, r3, eps2, f2))); // вычисление площади
     }
 
+    // Тестирование функций
     if(printTest)
     {
         printf("\n=== Testing roots of func f(x) = 8x^4 + 32x^3 + 40x^2 + 16x + 1 - [-1.5, -1.2] [-0.8, -0.4] : ===\n");
